@@ -1,0 +1,19 @@
+# 最小可运行依赖（只为跑通 main.py 的 RAG 问答闭环）
+# 从课程原始的 194 行 freeze 中裁剪：去掉 torch / transformers / sentence-transformers
+# / onnxruntime / datasets / ragas（这些是微调和评估阶段才需要的）
+gradio==4.36.1
+langchain==0.3.23
+langchain-community==0.3.21
+langchain-core==0.3.51
+langchain-openai==0.3.12
+langchain-text-splitters==0.3.8
+langchain-chroma>=0.2,<0.3
+chromadb==0.5.0
+dashscope==1.23.1
+unstructured==0.14.6
+python-docx==1.1.2
+Markdown==3.6
+pypdf==4.2.0
+rank-bm25==0.2.2
+SQLAlchemy==2.0.30
+python-dotenv==1.0.0

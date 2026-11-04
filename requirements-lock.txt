@@ -1,0 +1,40 @@
+# 已验证可运行的版本组合（macOS/Linux 之外的坑都在这几个 pin 上）
+#
+# 背景：gradio 4.36.1 是 2024 年的版本，和 2026 年的 starlette / pydantic 不兼容。
+# 直接 pip install 最新版会遇到：
+#   1) TypeError: unhashable type: 'dict'        <- starlette 1.x 太新
+#   2) TypeError: argument of type 'bool' is not iterable  <- pydantic 2.14 太新
+# 因此下面这些必须钉住版本。
+
+# --- Web 层（必须钉死）---
+gradio==4.36.1
+gradio-client==1.0.1
+fastapi==0.111.0
+starlette==0.37.2
+pydantic==2.8.2
+pydantic-core==2.20.1
+huggingface_hub==0.25.2
+
+# --- RAG 核心 ---
+langchain==0.3.23
+langchain-core==0.3.51
+langchain-community==0.3.21
+langchain-openai==0.3.12
+langchain-text-splitters==0.3.8
+langchain-chroma==0.2.2
+chromadb==0.5.0
+
+# --- 模型服务 ---
+dashscope==1.23.1
+openai==1.109.1
+
+# --- 文档解析 ---
+python-docx==1.1.2
+pypdf==4.2.0
+Markdown==3.6
+
+# --- 其他 ---
+rank-bm25==0.2.2
+SQLAlchemy==2.0.30
+python-dotenv==1.0.0
+loguru==0.7.3
