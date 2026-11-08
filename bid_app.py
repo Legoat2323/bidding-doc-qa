@@ -131,28 +131,51 @@ def upload_file(file_path):
 
 
 THEME = gr.themes.Soft(
-    primary_hue=gr.themes.colors.indigo,
-    secondary_hue=gr.themes.colors.slate,
+    primary_hue=gr.themes.colors.green,
+    secondary_hue=gr.themes.colors.lime,
+    neutral_hue=gr.themes.colors.stone,
     font=[gr.themes.GoogleFont("Inter"), "system-ui", "Microsoft YaHei", "sans-serif"],
 )
 
 CSS = """
-.gradio-container { max-width: 1440px !important; }
+.gradio-container { max-width: 1440px !important; background: #f9fcf3; }
+body { background: #f9fcf3; }
+
 #hero {
-    background: linear-gradient(135deg, #4338ca 0%, #6366f1 60%, #818cf8 100%);
+    background: linear-gradient(135deg, #7cb342 0%, #a5cf5c 55%, #cbe888 100%);
     color: #fff; border-radius: 16px; padding: 22px 26px; margin-bottom: 16px;
+    box-shadow: 0 6px 20px rgba(140, 193, 82, .22);
 }
 #hero h1 { margin: 0 0 6px; font-size: 24px; font-weight: 700; letter-spacing: .3px; }
-#hero p  { margin: 0; opacity: .85; font-size: 13.5px; }
+#hero p  { margin: 0; opacity: .9; font-size: 13.5px; }
 #hero .tag {
     display: inline-block; margin-top: 12px; padding: 3px 10px; border-radius: 999px;
-    background: rgba(255,255,255,.18); font-size: 12px; margin-right: 6px;
+    background: rgba(255,255,255,.22); font-size: 12px; margin-right: 6px;
 }
-#panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 6px 10px; }
-#answer-box { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 18px 22px; }
+
+#panel {
+    background: #fdfef9; border: 1px solid #dfe8cf; border-radius: 14px; padding: 6px 10px;
+    box-shadow: 0 2px 10px rgba(85, 137, 44, .06);
+}
+#answer-box {
+    background: #fdfef9; border: 1px solid #dfe8cf; border-radius: 14px; padding: 18px 22px;
+    box-shadow: 0 2px 10px rgba(85, 137, 44, .06);
+}
 #answer-box .prose { font-size: 15px; line-height: 1.85; }
 #answer-box table { font-size: 13.5px; }
-#answer-box code { background: #f4f4f5; padding: 1px 5px; border-radius: 4px; }
+#answer-box thead th { background: #eef5dc !important; color: #3d5a24; }
+#answer-box code { background: #eef5dc; color: #3f6b2a; padding: 1px 5px; border-radius: 4px; }
+
+/* 主按钮 */
+button.primary {
+    background: linear-gradient(135deg, #8cc152, #aed581) !important;
+    border: none !important; color: #fff !important;
+}
+button.primary:hover { filter: brightness(1.06); }
+
+/* 折叠面板标题 */
+.label-wrap span, .gr-accordion > .label-wrap span { color: #3d5a24; }
+
 footer { display: none !important; }
 """
 
@@ -160,7 +183,8 @@ with gr.Blocks(title="文档智能问答", theme=THEME, css=CSS) as demo:
     gr.HTML("""
     <div id="hero">
       <h1>文档智能问答</h1>
-      <p>招投标场景 · 答案标注出处 · 数字自动回原文核对</p>
+      <p>长文档问答 · 答案标注出处 · 数字自动回原文核对</p>
+      <span class="tag">招投标场景</span>
       <span class="tag">多文档切换</span>
       <span class="tag">事实校验</span>
       <span class="tag">模板检索</span>
@@ -171,7 +195,7 @@ with gr.Blocks(title="文档智能问答", theme=THEME, css=CSS) as demo:
         with gr.Column(scale=1, elem_id="panel"):
             doc = gr.Dropdown(choices=list_docs(), value=settings.bid_doc, label="知识库")
             choice = gr.Dropdown(choices=ALL_CHOICES, value=ALL_CHOICES[0], label="常见问题")
-            free = gr.Textbox(label="自由提问", placeholder="例如：投标有效期是多久？", lines=2)
+            free = gr.Textbox(label="自由提问", placeholder="输入你想了解的内容，例如：这个文档讲了什么？", lines=2)
             btn = gr.Button("查询", variant="primary")
             with gr.Accordion("添加文档（pdf / docx / txt / md）", open=False):
                 upload = gr.File(label="选择文件", file_types=[".pdf", ".docx", ".txt", ".md"])

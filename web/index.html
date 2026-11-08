@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>文档智能问答</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>文档智能问答</h1>
+      <p>长文档问答 · 答案标注出处 · 数字自动回原文核对</p>
+      <div class="tags">
+        <span class="tag">招投标场景</span>
+        <span class="tag">多文档切换</span>
+        <span class="tag">事实校验</span>
+        <span class="tag">模板检索</span>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- 左栏 -->
+      <div class="card">
+        <label class="field">
+          <span>知识库</span>
+          <select id="doc"></select>
+        </label>
+
+        <label class="field">
+          <span>常见问题</span>
+        </label>
+        <div class="presets" id="presets"></div>
+
+        <label class="field">
+          <span>自由提问</span>
+          <textarea id="question" placeholder="输入你想了解的内容，例如：这个文档讲了什么？"></textarea>
+        </label>
+
+        <button class="btn" id="askBtn">查询</button>
+
+        <div class="hint" id="hint">
+          预设问题是按文档用词写的检索式，命中率比口语提问高。
+          换其他文档时模板会自动失效，走通用 RAG。
+        </div>
+
+        <details style="margin-top:16px">
+          <summary style="cursor:pointer;font-size:13px;color:#6a9c3d;font-weight:600">
+            添加文档（pdf / docx / txt / md）
+          </summary>
+          <div class="upload-row" style="margin-top:10px">
+            <input type="file" id="file" accept=".pdf,.docx,.txt,.md" />
+            <button class="btn" id="uploadBtn">上传</button>
+          </div>
+          <div id="uploadStatus"></div>
+        </details>
+      </div>
+
+      <!-- 右栏 -->
+      <div class="card">
+        <div class="answer-head">
+          <h2>答案</h2>
+          <span class="badge" id="statusBadge">就绪</span>
+        </div>
+        <div id="answer" class="empty">选择一个问题，或直接输入内容提问。</div>
+        <div id="factcheck"></div>
+        <details class="sources" id="sourcesBox" style="display:none">
+          <summary>原文依据</summary>
+          <div id="sources"></div>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -19,7 +19,15 @@ from contextlib import asynccontextmanager
 from typing import Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException, UploadFile
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+
+from loguru import logger
+
+# 课程代码里有大量 INFO/DEBUG 输出（启动时会打印整个文档内容，几十万字符），
+# 这里直接静音，只保留 FastAPI 自己的访问日志。
+logger.remove()
 
 from config.settings import settings
 from core.extract import extract_weights
@@ -181,3 +189,22 @@ async def upload(file: UploadFile):
         raise HTTPException(status_code=500, detail=f"建索引失败：{type(e).__name__}: {e}")
 
     return {"uploaded": name, "documents": list_docs()}
+
+
+# --------------------------------------------------------------------------
+# 页面（同一份服务同时提供 API 和网页）
+# --------------------------------------------------------------------------
+WEB_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "web")
+
+if os.path.isdir(WEB_DIR):
+    app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
+
+    @app.get("/", include_in_schema=False)
+    def index():
+        return FileResponse(os.path.join(WEB_DIR, "index.html"))
+
+
+@app.get("/templates")
+def templates():
+    """前端拿模板问题列表用。"""
+    return {"templates": list(TEMPLATES.keys()), "default": settings.bid_doc}
