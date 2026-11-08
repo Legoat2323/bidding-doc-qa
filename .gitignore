@@ -1,29 +1,23 @@
-# ===== 密钥（绝对不能提交）=====
+﻿# 密钥
 .env
-.env.*
-!.env.example
 
-# ===== Python 依赖与缓存 =====
-# 依赖实际装在 ../libs（609MB），不进仓库
+# 依赖（装在 ../libs）
 libs/
 .venv/
-venv/
 __pycache__/
-*.py[cod]
-*.egg-info/
+*.pyc
 
-# ===== 运行产物（可重新生成）=====
+# 运行产物
 logs/
 chroma/
 db/
+*.db
 
-# ===== 大文件 / 派生数据 =====
-# 由 PDF 抽取而来，随时可重新生成
+# 派生数据（可由 PDF 重新生成）
 bid_fulltext.txt
-# 课程提供的示例文档（版权原因不入库，见 README「准备数据」）
+
+# 课程示例文档（版权原因不入库）
 示例文档/
 
-# ===== IDE =====
+# IDE
 .idea/
-.vscode/
-*.swp
