@@ -210,6 +210,37 @@ curl -X POST http://127.0.0.1:8000/ask \
 鉴权：在 `.env` 里设置 `API_KEY` 后，除 `/health` 外都要带 `X-API-Key` 头。
 不设置则不校验（方便本地开发）。
 
+## 测试
+
+```powershell
+python run_tests.py
+```
+
+18 个用例，覆盖三块纯逻辑：
+
+| 文件 | 测什么 |
+|---|---|
+| `tests/test_verify.py` | 事实校验：编造金额、百分比误判、逗号归一化、空上下文 |
+| `tests/test_text.py` | 去重（完全相同块 + 真重叠块）、出处标注、上下文拼装 |
+| `tests/test_extract.py` | 表格权重抽取：中英文括号、取首次出现、无匹配返回空 |
+
+**为什么自己写运行器而不是用 pytest**：这台机器的沙箱装不上包（HTTPS 被拒 +
+临时目录不可写）。测试只用到 assert，pytest 主要提供发现和报告，几十行就能替代。
+装得上 pytest 的环境里 `pytest` 也能直接跑。
+
+## 部署
+
+见 [DEPLOY.md](DEPLOY.md)。三种方式：
+
+| 方式 | 场景 |
+|---|---|
+| 本机直接跑 | 开发调试 |
+| `docker compose up -d` | 推荐，一条命令 |
+| 云服务器 + Nginx | 对外提供访问 |
+
+`Dockerfile` 已配置健康检查，`docker-compose.yml` 把知识库挂载到宿主机，
+容器重建不丢索引。
+
 ## 踩过的坑
 
 **1. 指标会骗人。** 第一次评估显示"检索 100%、回答 83%"，两条 ❌ 里有一条是

@@ -1,0 +1,14 @@
+services:
+  api:
+    build: .
+    image: bidding-doc-qa:latest
+    container_name: bidding-doc-qa
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      # 知识库和索引放在宿主机，容器重建不丢
+      - ./chroma:/app/chroma
+      - ./logs:/app/logs
+    restart: unless-stopped
