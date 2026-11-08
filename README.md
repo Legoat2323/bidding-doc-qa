@@ -132,20 +132,66 @@ WEIGHT_RE = re.compile(
 
 ```
 docqa/
-├── bid_app.py            Gradio 界面（招投标专用）
-├── bid_eval.py           12 个问题的评估脚本
-├── bid_template.py       业务模板检索的验证脚本
-├── bid_qa.py             三个业务问题的命令行验证
-├── knowledge.py          建索引 + 检索链路
-├── combine_client.py     链的组装（RAG 链 / 普通链）
-├── models.py             模型客户端（LLM / 嵌入 / 重排）
-├── custom_loader.py      文档加载与切分
-├── main.py               通用文档问答界面（课程原始版）
-├── smoke_test.py         端到端链路自检
-├── check_env.py          环境自检
-├── experiments/          定位问题时的实验脚本
-└── requirements-lock.txt 已验证可用的依赖版本
+├── config/
+│   └── settings.py      全部配置（端口、模型、阈值、条数），可用 .env 覆盖
+├── core/                业务逻辑，不 import 任何 UI
+│   ├── retrieval.py     检索与生成（RagService）
+│   ├── extract.py       表格数值正则抽取
+│   ├── verify.py        事实校验
+│   ├── text.py          去重、出处标注、拼上下文
+│   └── prompts.py       提示词集中管理
+├── api/
+│   └── main.py          FastAPI 接口层（/ask /upload /documents /health）
+├── bid_app.py           Gradio 页面层
+├── bid_eval.py          12 个问题的评估脚本
+├── bid_template.py      业务模板检索验证
+├── main.py              课程原始界面（通用文档问答）
+├── experiments/         定位问题时的实验脚本
+└── requirements-lock.txt
 ```
+
+分层的好处：`core/` 不依赖 Gradio 也不依赖 FastAPI，
+所以页面和服务能共用同一套逻辑，加接口不用重写。
+
+## 作为服务使用（HTTP API）
+
+除了页面，也能被别的系统调用：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\run_api.ps1
+```
+
+打开 http://127.0.0.1:8000/docs 看自动生成的接口文档。
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/health` | 健康检查（不需要鉴权） |
+| GET | `/documents` | 已建索引的文档列表 |
+| POST | `/ask` | 提问，返回答案 + 出处 + 事实校验结果 |
+| POST | `/upload` | 上传文档并建索引 |
+
+调用示例：
+
+```bash
+curl -X POST http://127.0.0.1:8000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question": "投标有效期多久"}'
+```
+
+返回：
+
+```json
+{
+  "answer": "投标有效期为自投标截止之日起90天（日历天）[p.277]",
+  "sources": [{"ref": "p.277", "page": 277, "text": "..."}],
+  "fact_check": {"checked": 1, "missing": []},
+  "model": "qwen-plus",
+  "doc": "招标文件正文22.pdf"
+}
+```
+
+鉴权：在 `.env` 里设置 `API_KEY` 后，除 `/health` 外都要带 `X-API-Key` 头。
+不设置则不校验（方便本地开发）。
 
 ## 踩过的坑
 
