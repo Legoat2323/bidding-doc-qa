@@ -2,7 +2,7 @@
 
 把一份 332 页的工程招标文件，变成能问、能查、能指回页码的工具。
 
-后端 FastAPI/Gradio + LangChain + Chroma，模型用阿里百炼 qwen-max。
+后端 FastAPI + LangChain + Chroma，模型用阿里百炼 qwen-plus，前端原生 HTML/JS。
 
 ## 这个项目解决什么问题
 
@@ -152,6 +152,23 @@ docqa/
 
 分层的好处：`core/` 不依赖 Gradio 也不依赖 FastAPI，
 所以页面和服务能共用同一套逻辑，加接口不用重写。
+
+## 前端
+
+页面是手写的 HTML + 原生 JS，由 FastAPI 直接托管，没有用 Gradio。
+
+原因：Gradio 的样式定制有上限（组件内部结构改不了），做不出产品形态。
+现在 `web/` 下只有三个文件，没有构建链、没有 node_modules，改起来直接生效。
+
+| 文件 | 作用 |
+|---|---|
+| `web/index.html` | 结构 |
+| `web/style.css` | 样式（牛油果配色） |
+| `web/app.js` | 请求 + 渲染（含一个 60 行的迷你 Markdown 渲染器） |
+
+渲染器是自己写的，没引外部 CDN——离线部署也能用。
+
+Gradio 版本（`bid_app.py`）仍然保留，作为备用调试入口，端口 7861。
 
 ## 作为服务使用（HTTP API）
 
