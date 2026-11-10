@@ -132,27 +132,39 @@ WEIGHT_RE = re.compile(
 
 ```
 docqa/
-├── config/
-│   └── settings.py      全部配置（端口、模型、阈值、条数），可用 .env 覆盖
-├── core/                业务逻辑，不 import 任何 UI
-│   ├── retrieval.py     检索与生成（RagService）
-│   ├── extract.py       表格数值正则抽取
-│   ├── verify.py        事实校验
-│   ├── text.py          去重、出处标注、拼上下文
-│   └── prompts.py       提示词集中管理
-├── api/
-│   └── main.py          FastAPI 接口层（/ask /upload /documents /health）
-├── bid_app.py           Gradio 页面层
-├── bid_eval.py          12 个问题的评估脚本
-├── bid_template.py      业务模板检索验证
-├── main.py              课程原始界面（通用文档问答）
-├── experiments/         定位问题时的实验脚本
-└── requirements-lock.txt
+├── config/settings.py      全部配置（端口、模型、阈值），可用 .env 覆盖
+├── core/                   业务逻辑，不 import 任何 UI 框架
+│   ├── retrieval.py        检索与生成（RagService）
+│   ├── extract.py          表格数值正则抽取
+│   ├── verify.py           事实校验
+│   ├── text.py             去重、出处标注、拼上下文
+│   └── prompts.py          提示词集中管理
+├── api/main.py             FastAPI 接口（/ask /upload /documents /health）
+├── web/                    手写前端（index.html / style.css / app.js）
+├── bid_app.py              Gradio 页面（备用调试入口）
+├── bid_eval.py             12 题评估脚本
+├── knowledge.py            建索引 + 检索链路（课程原始层）
+├── models.py               模型客户端（LLM / 嵌入 / 重排）
+├── combine_client.py       把上面两个组装成 RAG 链
+├── custom_loader.py        文档加载与切分
+├── logger.py               日志配置
+├── tests/                  18 个单元测试（纯逻辑，不依赖网络）
+├── tools/                  验证与自检脚本
+├── experiments/            定位问题时的实验脚本
+├── requirements-api.txt    运行时依赖（当前使用）
+└── requirements-lock.txt   已验证的完整版本组合
 ```
 
-分层的好处：`core/` 不依赖 Gradio 也不依赖 FastAPI，
-所以页面和服务能共用同一套逻辑，加接口不用重写。
+**读代码从这四个文件开始**（按顺序）：
 
+| 顺序 | 文件 | 看什么 |
+|---|---|---|
+| 1 | `api/main.py` | 一个请求怎么进来的，接口长什么样 |
+| 2 | `core/retrieval.py` | 检索和生成怎么串起来的 |
+| 3 | `knowledge.py` | 底层索引与召回（课程代码，改动过） |
+| 4 | `core/verify.py` | 事实校验（最独立、最好读的一块） |
+
+其余文件是脚手架（部署、脚本、测试），不影响理解主流程。
 ## 前端
 
 页面是手写的 HTML + 原生 JS，由 FastAPI 直接托管，没有用 Gradio。

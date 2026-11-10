@@ -1,3 +1,10 @@
+import os
+import sys
+
+# 本脚本位于 tools/，需要把项目根加入 sys.path 才能 import knowledge / models 等
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _ROOT)
+
 from datasets import Dataset
 from ragas.embeddings import LangchainEmbeddingsWrapper
 from ragas.llms import LangchainLLMWrapper

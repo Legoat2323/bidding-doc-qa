@@ -4,10 +4,17 @@
     python bid_qa.py
 """
 import os
+import sys
+
+# 本脚本位于 tools/，需要把项目根加入 sys.path 才能 import knowledge / models 等
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _ROOT)
+
+import os
 import shutil
 import sys
 
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
+os.chdir(_ROOT)
 
 from dotenv import load_dotenv
 
