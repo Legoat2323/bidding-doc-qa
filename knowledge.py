@@ -2,7 +2,7 @@ import hashlib
 import os
 import shutil
 from typing import Optional
-
+import re
 from langchain.indexes import SQLRecordManager
 from langchain.retrievers import ContextualCompressionRetriever, RePhraseQueryRetriever, EnsembleRetriever
 from langchain.retrievers.document_compressors import LLMChainFilter, CrossEncoderReranker
@@ -181,6 +181,13 @@ class MyKnowledge:
         return final_retriever
 
 
+#bm25向量检索，中文按相邻两字切分
+def bigram_tokenize(text: str) -> list[str]:
+    """中文按相邻两字切分：评标委员会 -> 评标/标委/委员/员会"""
+    text = re.sub(r"\s+", "", text)          # 去掉所有空白字符
+    return [text[i:i + 2] for i in range(len(text) - 1)]
+
+
 # 创建索引
 def create_indexes(collection_name: str, loader: BaseLoader, embedding_function: Optional[Embeddings] = None):
     # 初始化Chroma数据库
@@ -227,7 +234,7 @@ def create_indexes(collection_name: str, loader: BaseLoader, embedding_function:
         # 向量召回 8 条 + BM25 召回 8 条，融合后约 8 条候选
         retrievers=[
             db.as_retriever(search_kwargs={"k": 8}),
-            BM25Retriever.from_documents(documents, k=8),
+            BM25Retriever.from_documents(documents, k=8, preprocess_func=bigram_tokenize),
         ]
     )
     # logger.info(f"ensemble_retriever: {ensemble_retriever}")
