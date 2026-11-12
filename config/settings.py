@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
+#这是为后面去取环境变量的值定义了一个函数
 def _int(name: str, default: int) -> int:
     try:
         return int(os.getenv(name, default))
@@ -34,13 +34,17 @@ class Settings:
 
     # 模型
     llm_model: str = os.getenv("LLM_MODEL", "qwen-plus")
+
+    #这些都是用了一开头定义的函数方法来获取环境变量的值，如果环境变量不存在则使用默认值
     llm_temperature: float = _float("LLM_TEMPERATURE", 0.1)
     llm_max_tokens: int = _int("LLM_MAX_TOKENS", 1000)
 
     # 检索
     recall_k: int = _int("RECALL_K", 8)
     rerank_top_n: int = _int("RERANK_TOP_N", 5)
-    relevance_threshold: float = _float("RELEVANCE_THRESHOLD", 1.0)
+    # 相关性阈值：重排序分数低于它的片段直接丢。0 = 关闭（默认）
+    # 取值别拍脑袋——先跑 experiments/exp_threshold.py 看 12 题的分数分布再定。
+    relevance_threshold: float = _float("RELEVANCE_THRESHOLD", 0.0)
 
     # 输出约束
     max_answer_items: int = _int("MAX_ANSWER_ITEMS", 10)

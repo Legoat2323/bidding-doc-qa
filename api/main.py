@@ -25,7 +25,7 @@ from pydantic import BaseModel, Field
 
 from loguru import logger
 
-# 课程代码里有大量 INFO/DEBUG 输出（启动时会打印整个文档内容，几十万字符），
+# 有大量 INFO/DEBUG 输出（启动时会打印整个文档内容，几十万字符），
 # 这里直接静音，只保留 FastAPI 自己的访问日志。
 logger.remove()
 
@@ -42,7 +42,7 @@ service: Optional[RagService] = None
 async def lifespan(app: FastAPI):
     global service
     print("启动中：加载知识库 ...")
-    service = RagService()
+    service = RagService()            #这里把之前看的rag引擎装配好
     print("启动完成")
     yield
     service = None
@@ -120,7 +120,8 @@ def health():
 def documents():
     return {"documents": list_docs(), "default": settings.bid_doc}
 
-
+#流程总结：接客  找资料（retrieval）
+# 如果是权重就抽表格（extract）  让AI写答案  查数字防造假（verify） 打包返回。
 @app.post("/ask", response_model=AskResponse, dependencies=[Depends(require_key)])
 def ask(req: AskRequest):
     if service is None:
@@ -168,7 +169,7 @@ def ask(req: AskRequest):
         doc=doc,
     )
 
-
+#文件上传接口
 @app.post("/upload", dependencies=[Depends(require_key)])
 async def upload(file: UploadFile):
     if service is None:

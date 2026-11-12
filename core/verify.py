@@ -9,23 +9,28 @@
 import re
 
 # 带单位的数字才算「事实性声明」，纯数字多半是页码/序号
+# 数字部分提取为第一组，单位为第二组
 CLAIM_RE = re.compile(r"(\d[\d,]*(?:\.\d+)?)\s*(万元|元|%|日历天|天|年)")
 
-
+#answer是大模型生成的答案   context是检索到的原文资料
 def verify_claims(answer: str, context: str) -> tuple[int, list[str]]:
     """返回 (校验的数量, 未在原文找到的列表)。"""
     if not context:
         return 0, []
-
+    #给检索到的原文“卸妆” 变成纯文本
     norm_ctx = context.replace(",", "").replace("，", "").replace(" ", "")
     claims: dict[tuple[str, str], bool] = {}
 
+    # 提取答案里的数字部分（忽略千分位的逗号）和单位
     for m in CLAIM_RE.finditer(answer or ""):
         val = m.group(1).replace(",", "")
+        unit = m.group(2)
+        # 忽略个位数（多半是页码/序号）
         unit = m.group(2)
         # 个位数多半是页码/序号，忽略；但百分比例外，3% 也是有意义的数字
         if len(val.replace(".", "")) < 2 and unit != "%":
             continue
+        # 记录这个数字和单位
         claims[(val, unit)] = True
 
     def found(v: str, u: str) -> bool:
