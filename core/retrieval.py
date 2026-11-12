@@ -2,9 +2,8 @@
 
 UI 层只管调问和显示，不碰检索细节。
 
-说明：这里用到了 CombineClient 的私有属性（_MyKnowledge__retrievers）。
-这的封装没做好的地方——它没提供「按文档取检索器」的公开方法。
-把这类 hack 集中在这一个文件里，比散在 UI 里好维护。
+说明：按文档取混合检索器，统一走 CombineClient.get_ensemble()。
+（以前这里直接读私有属性 _MyKnowledge__retrievers，既难读又绑死类名，已经改掉。）
 """
 from config.settings import settings
 from core.prompts import ANSWER_PROMPT, WEIGHT_PROMPT
@@ -27,7 +26,7 @@ class RagService:
         self.client = CombineClient()     #创建一个类的实例对象
         self.client.load_knowledge()      #调用刚才创建类的实例对象的方法 加载本地知识库（就是之前settings里的chroma目录
 
-        self.ensemble = self.client._MyKnowledge__retrievers[get_md5(settings.bid_doc)]  #获取指定文档的检索器
+        self.ensemble = self.client.get_ensemble(settings.bid_doc)  #获取指定文档的检索器
         self.rerank = get_ali_rerank(top_n=settings.rerank_top_n)     #获取 rerank 模型，准备把搜出来的资料重新打分
         self.llm = get_lc_model_client(model=settings.llm_model,       #获取 llm 模型
             temperature=settings.llm_temperature,  #获取 llm 温度

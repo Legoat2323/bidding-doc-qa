@@ -1,4 +1,4 @@
-"""定位「权重条款检索不到」的故障层：召回不足，还是被过滤/重排砍掉？
+﻿"""定位「权重条款检索不到」的故障层：召回不足，还是被过滤/重排砍掉？
 
 用法：python exp_recall.py
 """
@@ -32,7 +32,7 @@ def has_answer(docs):
 client = CombineClient()
 client.load_knowledge()
 
-ensemble = client._MyKnowledge__retrievers[get_md5(DOC)]
+ensemble = client.get_ensemble(DOC)
 dense, sparse = ensemble.retrievers
 
 print("=" * 72)

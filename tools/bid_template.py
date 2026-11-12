@@ -1,4 +1,4 @@
-"""业务模板检索：对高频问题预先写好检索式，绕过"口语 → 文档术语"的鸿沟。
+﻿"""业务模板检索：对高频问题预先写好检索式，绕过"口语 → 文档术语"的鸿沟。
 
 这是真实的工程做法：
     招投标场景里，用户真正会问的问题就那几十个（资质、否决、评分、保证金、工期…）。
@@ -51,7 +51,7 @@ FINGERPRINT = {
 client = CombineClient()
 client.load_knowledge()
 
-ensemble = client._MyKnowledge__retrievers[get_md5(DOC)]
+ensemble = client.get_ensemble(DOC)
 rerank = get_ali_rerank(top_n=5)
 
 print("=" * 72)

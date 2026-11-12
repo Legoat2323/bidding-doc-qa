@@ -61,15 +61,15 @@ CASES = [
     ("最高投标限价是多少？", ["150627581", "150,627", "1.5亿", "15062"], False),
     ("设计费多少？", ["2336570", "233"], False),
     ("暂列金额是多少？", ["15772346", "1577"], False),
-    ("质量保证金的比例是多少？", ["未提及", "没有", "3%", "5%"], False),
-    ("项目经理需要什么证书？", ["未提及", "没有", "建造师", "证书"], False),
-    ("投标文件用什么字体？", ["仿宋", "未提及", "4 号"], False),
+    ("质量保证金的比例是多少？", ["3%"], False),
+    ("项目经理需要什么证书？", ["未提及"], False),
+    ("投标文件用什么字体？", ["仿宋",  "4 号"], False),
 ]
 
 print("加载知识库 ...")
 client = CombineClient()
 client.load_knowledge()
-ensemble = client._MyKnowledge__retrievers[get_md5(DOC)]
+ensemble = client.get_ensemble(DOC)
 rerank = get_ali_rerank(top_n=5)
 llm = get_lc_model_client(temperature=0.1, max_tokens=1500)
 

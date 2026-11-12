@@ -38,6 +38,7 @@ class RelevanceFilter(BaseDocumentCompressor):
             if (d.metadata.get("relevance_score") or 0.0) >= self.min_score
         ]
 
+
 # 中文查询重写提示词（课程原版是英文的，对中文招投标术语几乎没帮助）
 #
 # 为什么需要它：
@@ -65,6 +66,7 @@ REPHRASE_PROMPT = PromptTemplate.from_template(
 # 设置知识库 向量模型 重排序模型的路径
 KNOWLEDGE_DIR = './chroma/knowledge/'
 embedding_model = get_ali_embeddings()
+
 
 class MyKnowledge:
     """
@@ -125,6 +127,16 @@ class MyKnowledge:
 
         return collections
 
+    def get_ensemble(self, collection: str):
+        """按文档名取「向量 + BM25」的混合检索器（没有就返回 None）。
+
+        为什么要有这个方法：
+            __retrievers 是私有属性，外部想用只能写 _MyKnowledge__retrievers
+            （Python 会把 __xxx 改名成 _类名__xxx），又长又难读，还绑死了类名。
+            这里是给外部（UI、评估脚本、实验脚本）用的公开入口。
+        """
+        return self.__retrievers.get(get_md5(collection))
+
     def get_retrievers(self, collection):
         collection_name = get_md5(collection)
         logger.info(f"知识库名字md5: {collection_name}")
@@ -167,6 +179,7 @@ class MyKnowledge:
 
         logger.debug(f"最终检索器为: {final_retriever}")
         return final_retriever
+
 
 # 创建索引
 def create_indexes(collection_name: str, loader: BaseLoader, embedding_function: Optional[Embeddings] = None):
@@ -219,6 +232,7 @@ def create_indexes(collection_name: str, loader: BaseLoader, embedding_function:
     )
     # logger.info(f"ensemble_retriever: {ensemble_retriever}")
     return ensemble_retriever
+
 
 def get_md5(input_string):
     # 创建一个 md5 哈希对象

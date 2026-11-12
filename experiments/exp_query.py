@@ -1,4 +1,4 @@
-"""验证「用户用词 ≠ 文档用词」是否导致检索失败。
+﻿"""验证「用户用词 ≠ 文档用词」是否导致检索失败。
 
 对同一意图用三种问法，看哪种能召回权重条款。
 用法：python exp_query.py
@@ -31,7 +31,7 @@ QUERIES = {
 client = CombineClient()
 client.load_knowledge()
 
-ensemble = client._MyKnowledge__retrievers[get_md5(DOC)]
+ensemble = client.get_ensemble(DOC)
 dense, sparse = ensemble.retrievers
 dense.search_kwargs = {"k": 8}
 
