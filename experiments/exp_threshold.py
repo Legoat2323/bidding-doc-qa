@@ -18,8 +18,16 @@
 import os
 import sys
 
-os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.getcwd())
+HERE = os.path.dirname(os.path.abspath(__file__))        # courses/docqa/experiments
+ROOT = os.path.dirname(HERE)                              # courses/docqa
+os.chdir(ROOT)
+sys.path.insert(0, ROOT)
+
+# 这个项目的依赖是 vendored 在 courses\libs 里的（run.ps1 也是这么设的）。
+# 自己把 libs 加进 sys.path，就不用每次先设 PYTHONPATH 了。
+LIBS = os.path.join(os.path.dirname(ROOT), "libs")        # courses/libs
+if os.path.isdir(LIBS) and LIBS not in sys.path:
+    sys.path.insert(0, LIBS)
 
 from dotenv import load_dotenv
 

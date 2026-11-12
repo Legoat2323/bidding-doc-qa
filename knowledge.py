@@ -16,6 +16,27 @@ from langchain_core.prompts import PromptTemplate
 from custom_loader import MyCustomLoader
 from models import get_lc_model_client, get_ali_embeddings, get_ali_rerank
 from loguru import logger
+from langchain_core.documents.compressor import BaseDocumentCompressor
+
+from config.settings import settings
+
+
+class RelevanceFilter(BaseDocumentCompressor):
+    """按重排序分数过滤：低于阈值的片段直接丢。
+
+    阈值来自 RELEVANCE_THRESHOLD（0 = 关闭）。
+    放在重排之后、返回之前 —— 这样所有走 get_retrievers 的路径（UI、评估脚本）口径一致。
+    """
+
+    min_score: float = 0.0
+
+    def compress_documents(self, documents, query, callbacks=None):
+        if self.min_score <= 0:
+            return list(documents)
+        return [
+            d for d in documents
+            if (d.metadata.get("relevance_score") or 0.0) >= self.min_score
+        ]
 
 # 中文查询重写提示词（课程原版是英文的，对中文招投标术语几乎没帮助）
 #
@@ -116,7 +137,7 @@ class MyKnowledge:
         """
         检索链路（改造后）：查询重写 → 混合召回 → 重排序
 
-        为什么去掉了课程原版的 LLMChainFilter：
+        为什么去掉了的LLMChainFilter：
             它会对每个候选片段单独调用一次 LLM，问"这段相关吗？"——是 O(n) 次串行请求。
             召回 k=3 时是 6 次，k=8 时就是 16 次，一次问答可能拖到几分钟。
             而它的收益有限（重排序模型已经能排序），所以删掉。
@@ -134,6 +155,16 @@ class MyKnowledge:
         final_retriever = ContextualCompressionRetriever(
             base_compressor=rerank_retriever, base_retriever=rephrase_retriever
         )
+
+        # 第 3 步：相关性阈值过滤（0 = 关闭）
+        # 为什么要独立一层：重排只负责"排序"，不负责"这条到底该不该留"。
+        # 全部被丢掉 = 文档里确实没有答案，调用方应回「未提及」，而不是拿空上下文去问模型。
+        if settings.relevance_threshold > 0:
+            final_retriever = ContextualCompressionRetriever(
+                base_compressor=RelevanceFilter(min_score=settings.relevance_threshold),
+                base_retriever=final_retriever,
+            )
+
         logger.debug(f"最终检索器为: {final_retriever}")
         return final_retriever
 

@@ -14,7 +14,16 @@ import os
 import re
 import sys
 
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
+_ROOT = os.path.dirname(os.path.abspath(__file__))
+os.chdir(_ROOT)
+sys.path.insert(0, _ROOT)
+
+# 这个项目的依赖是 vendored 在 courses\libs 里的（run.ps1 也是这么设的）。
+# 自己加进 sys.path，PyCharm 直接点 Run 也能跑，不用手动配 PYTHONPATH。
+_LIBS = os.path.join(os.path.dirname(_ROOT), "libs")
+if os.path.isdir(_LIBS) and _LIBS not in sys.path:
+    sys.path.insert(0, _LIBS)
+
 from dotenv import load_dotenv
 
 load_dotenv()
