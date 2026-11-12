@@ -48,23 +48,44 @@ RETRIEVAL_QUERY = {
     "投标保证金": "投标保证金 金额 形式 退还 3.4.1",
 }
 
-# (问题, 期望关键词组（任一命中即算对）, 是否走模板检索)
+# ---- A 组：文档里有答案的题（期望关键词，任一命中即算对）----
+# (问题, 期望关键词组, 是否走模板检索)
 CASES = [
-    # ---- 模板类 ----
+    # 模板类
     ("评分构成 / 权重", ["0.25", "0.40", "0.35"], True),
     ("否决投标情形", ["否决", "取消", "无效", "不予"], True),
     ("资格要求", ["6750", "资质"], True),
     ("投标保证金", ["保证金", "投标担保", "担保"], True),
-    # ---- 自由提问（走完整 RAG）----
+    # 自由提问（走完整 RAG）
     ("投标有效期是多久？", ["90"], False),
     ("总工期多少天？", ["360"], False),
     ("最高投标限价是多少？", ["150627581", "150,627", "1.5亿", "15062"], False),
     ("设计费多少？", ["2336570", "233"], False),
     ("暂列金额是多少？", ["15772346", "1577"], False),
     ("质量保证金的比例是多少？", ["3%"], False),
-    ("项目经理需要什么证书？", ["未提及"], False),
-    ("投标文件用什么字体？", ["仿宋",  "4 号"], False),
+    ("投标文件用什么字体？", ["仿宋", "4 号"], False),
+    # 2026-11-12 新增 8 题（答案已对照原文核对）
+    ("投标截止时间是什么时候？", ["2023-12-20", "2023 年 12 月 20", "09:00"], False),
+    ("投标文件需要提交几份？", ["一份", "1份", "1 份"], False),
+    ("评标委员会由几个人组成？", ["9 人", "9人", "九人"], False),
+    ("评标专家从哪里抽取？", ["专家库", "随机抽取"], False),
+    ("基准日期是怎么确定的？", ["28"], False),
+    ("技术方案采用什么评审方式？", ["暗标"], False),
+    ("未中标的投标担保什么时候退还？", ["5 个工作日", "5个工作日", "5 个"], False),
+    ("履约保证金什么情况下不予退还？", ["不履行合同", "不予退还"], False),
 ]
+
+# ---- B 组：文档里没有答案的题（只有答"未提及"才算对）----
+# 为什么单独一组：这类题没有"期望关键词"可言，检索命中率也不该把它算进分母。
+# 它们存在，是为了测"模型会不会硬编" —— 这是 RAG 最容易翻车的地方。
+REFUSAL_CASES = [
+    "项目经理需要什么证书？",
+    "投标文件需要提交几份纸质正本和副本？",
+    "项目经理的年龄上限是多少？",
+    "项目经理需要提供几年的社保缴纳证明？",
+]
+
+NO_ANSWER_WORDS = ("未提及", "没有", "未找到", "不含", "未说明", "无法")
 
 print("加载知识库 ...")
 client = CombineClient()
@@ -98,10 +119,8 @@ PROMPT = """你是招投标文件助手。只根据下面的【原文片段】�
 {question}
 """
 
-ret_ok = ans_ok = 0
-rows = []
 
-for q, keys, is_template in CASES:
+def ask(q, is_template):
     if is_template:
         query = RETRIEVAL_QUERY[q]
         docs = rerank.compress_documents(ensemble.invoke(query), query)
@@ -112,21 +131,49 @@ for q, keys, is_template in CASES:
         result = client.invoke(q, DOC, max_length=1500, temperature=0.1)
         docs = result.get("context", [])
         answer = result.get("answer") or ""
+    return docs, answer
 
+
+ret_ok = ans_ok = 0
+rows = []
+
+for q, keys, is_template in CASES:
+    docs, answer = ask(q, is_template)
     r = hit_any(ctx_of(docs), keys)
     a = hit_any(answer, keys)
     ret_ok += r
     ans_ok += a
-    rows.append((q, r, a, answer.replace("\n", " ")[:60]))
+    rows.append((q, "✅" if r else "❌", "✅" if a else "❌", answer.replace("\n", " ")[:60]))
+
+refuse_ok = 0
+refuse_rows = []
+for q in REFUSAL_CASES:
+    docs, answer = ask(q, False)
+    ok = hit_any(answer, NO_ANSWER_WORDS)
+    refuse_ok += ok
+    refuse_rows.append((q, "✅" if ok else "❌", answer.replace("\n", " ")[:60]))
+
+W = 30
+print()
+print("=" * 96)
+print("【A 组】文档里有答案：检索和回答都该命中")
+print("=" * 96)
+print(f"{'问题':<{W}}{'检索':<6}{'回答':<6}片段回答")
+print("-" * 96)
+for q, r, a, preview in rows:
+    print(f"{q:<{W}}{r:<6}{a:<6}{preview}")
 
 print()
-print("=" * 92)
-print(f"{'问题':<24}{'检索':<6}{'回答':<6}片段回答")
-print("=" * 92)
-for q, r, a, preview in rows:
-    print(f"{q:<24}{'✅' if r else '❌':<6}{'✅' if a else '❌':<6}{preview}")
+print("=" * 96)
+print("【B 组】文档里没有答案：回答必须是「未提及」，硬编就是错")
+print("=" * 96)
+for q, ok, preview in refuse_rows:
+    print(f"{q:<{W}}{ok:<6}{preview}")
 
 n = len(CASES)
-print("=" * 92)
-print(f"检索命中率：{ret_ok}/{n} = {ret_ok/n:.0%}")
-print(f"回答命中率：{ans_ok}/{n} = {ans_ok/n:.0%}")
+m = len(REFUSAL_CASES)
+print("=" * 96)
+print(f"A 组检索命中率：{ret_ok}/{n} = {ret_ok/n:.0%}   （分母只含有答案的题）")
+print(f"A 组回答命中率：{ans_ok}/{n} = {ans_ok/n:.0%}")
+print(f"B 组拒答正确率：{refuse_ok}/{m} = {refuse_ok/m:.0%}   （该说「未提及」时说了没有）")
+print(f"综合回答正确率：{ans_ok + refuse_ok}/{n + m} = {(ans_ok + refuse_ok)/(n + m):.0%}")
