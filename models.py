@@ -13,7 +13,7 @@ from loguru import logger
 
 ALI_TONGYI_API_KEY_OS_VAR_NAME = "DASHSCOPE_API_KEY"
 ALI_TONGYI_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-# 注：课程原版写的是 qwen-max-latest / deepseek-r1 / deepseek-v3 / qvq-max-latest，
+# 注：原版写的是 qwen-max-latest / deepseek-r1 / deepseek-v3 / qvq-max-latest，
 # 这些名字在当前百炼账号下不可用（返回 model_not_found），已换成实际可用的模型 ID。
 ALI_TONGYI_MAX_MODEL = "qwen-max"
 ALI_TONGYI_DEEPSEEK_R1 = "deepseek-v4-pro"       # 推理模型，会返回 reasoning_content
@@ -52,7 +52,7 @@ class AliRerank(BaseDocumentCompressor):
     """阿里百炼重排序器（替代 langchain_community 的 DashScopeRerank）
 
     为什么要自己写：
-        课程原版用 DashScopeRerank，但它在当前 dashscope SDK 下会返回空结果
+        原版用 DashScopeRerank，但它在当前 dashscope SDK 下会返回空结果
         （AttributeError: 'NoneType' object has no attribute 'results'）。
         原因是封装里没有传 return_documents=True，SDK 拿不到 results。
         这里直接调 TextReRank，并容错处理，失败时退回原始顺序。
@@ -87,7 +87,7 @@ class AliRerank(BaseDocumentCompressor):
         if resp.status_code != 200 or not resp.output:
             logger.error(f"重排序失败({resp.status_code})，退回原始顺序: {resp.message}")
             return documents[:top_n]
-
+        #这里有检索分数
         results = resp.output.get("results") or []
         reranked: list[Document] = []
         for item in results:
