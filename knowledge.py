@@ -231,10 +231,10 @@ def create_indexes(collection_name: str, loader: BaseLoader, embedding_function:
     代价：候选变多，过滤阶段要逐条问 LLM，耗时和 token 都会上升。
     '''
     ensemble_retriever = EnsembleRetriever(
-        # 向量召回 8 条 + BM25 召回 8 条，融合后约 8 条候选
+        # 向量召回 32 条 + BM25 召回 32 条，融合后约 64 条候选
         retrievers=[
-            db.as_retriever(search_kwargs={"k": 8}),
-            BM25Retriever.from_documents(documents, k=8, preprocess_func=bigram_tokenize),
+            db.as_retriever(search_kwargs={"k": 32}),
+            BM25Retriever.from_documents(documents, k=32, preprocess_func=bigram_tokenize),
         ]
     )
     # logger.info(f"ensemble_retriever: {ensemble_retriever}")

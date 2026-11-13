@@ -145,6 +145,18 @@ for q, keys, is_template in CASES:
     ans_ok += a
     rows.append((q, "✅" if r else "❌", "✅" if a else "❌", answer.replace("\n", " ")[:60]))
 
+
+# 检索没拿到、但回答却命中了 —— 这种题必须单独看
+lucky = [(q, a_) for q, r, a_, _ in rows if r == "❌" and a_ == "✅"]
+print()
+print("=" * 96)
+print("【检索❌ 但 回答✅】回答没靠上下文也对了")
+print("=" * 96)
+for q, _ in lucky:
+    print(f"  · {q}")
+if not lucky:
+    print("  无")
+
 refuse_ok = 0
 refuse_rows = []
 for q in REFUSAL_CASES:
@@ -177,3 +189,4 @@ print(f"A 组检索命中率：{ret_ok}/{n} = {ret_ok/n:.0%}   （分母只含�
 print(f"A 组回答命中率：{ans_ok}/{n} = {ans_ok/n:.0%}")
 print(f"B 组拒答正确率：{refuse_ok}/{m} = {refuse_ok/m:.0%}   （该说「未提及」时说了没有）")
 print(f"综合回答正确率：{ans_ok + refuse_ok}/{n + m} = {(ans_ok + refuse_ok)/(n + m):.0%}")
+
