@@ -55,8 +55,11 @@ REPHRASE_PROMPT = PromptTemplate.from_template(
    资质 → 资格条件；废标 → 否决投标；保证金 → 投标保证金；工期 → 计划工期；
    业绩 → 类似工程业绩。
 2. 保留问题中的数字、编号、专有名词（如 J1、J2、J3、1.4.3 项）。
-3. 如果问题问的是"各占多少分/多少比例/权重"，补充"权重 取值范围 计分"等词。
+3. 只有当问题明确在问"评分/分值/权重/打分占比"时，才补充"权重 取值范围 计分"；
+   问的是合同条款（如履约担保比例、投标保证金比例、质量保证金比例）时，绝对不要加这些词。
 4. 只输出改写后的查询本身，不要解释，不要加引号、不要换行。
+5. 保留原问题里的实体和限定词（如"项目经理""社保""几年"），不要删掉。
+6. 输出用空格分隔的关键词，不超过 20 个字。
 
 用户问题：{question}
 
@@ -77,7 +80,7 @@ class MyKnowledge:
     logger.info(f"当前嵌入模型: {__embeddings.model}")
 
     __retrievers = {}
-    __llm = get_lc_model_client()
+    __llm = get_lc_model_client(temperature=0.2)
 
     def upload_knowledge(self, temp_file):
         """
@@ -225,13 +228,13 @@ def create_indexes(collection_name: str, loader: BaseLoader, embedding_function:
     稀疏检索器擅长根据关键字查找相关文档，而密集检索器擅长根据语义相似性查找相关文档。
 
     召回宽度：课程原版各取 k=3，候选池太小——正确答案经常排在第 4~8 位，
-    于是被后面的过滤/重排全部砍掉。这里改成 k=8，配合重排 top_n=5，
+    于是被后面的过滤/重排全部砍掉。这里用 k=32，配合重排 top_n=5，
     就是业界常说的「宽召回、窄精排」：
         召回要宽（宁可多捞），精排要窄（只留最相关的几条给模型）。
     代价：候选变多，过滤阶段要逐条问 LLM，耗时和 token 都会上升。
     '''
     ensemble_retriever = EnsembleRetriever(
-        # 向量召回 32 条 + BM25 召回 32 条，融合后约 64 条候选
+        # 向量召回 32 条 + BM25 召回 32 条，融合后约 48 条候选
         retrievers=[
             db.as_retriever(search_kwargs={"k": 32}),
             BM25Retriever.from_documents(documents, k=32, preprocess_func=bigram_tokenize),
