@@ -33,7 +33,8 @@ from loguru import logger
 logger.remove()
 logger.add(sys.stderr, level="WARNING")
 
-from combine_client import CombineClient
+from combine_client import CombineClient, qa_prompt
+from langchain.chains.combine_documents import create_stuff_documents_chain
 from knowledge import get_md5
 from models import get_ali_rerank, get_lc_model_client
 
@@ -72,14 +73,21 @@ CASES = [
     ("基准日期是怎么确定的？", ["28"], False),
     ("技术方案采用什么评审方式？", ["暗标"], False),
     ("未中标的投标担保什么时候退还？", ["5 个工作日", "5个工作日", "5 个"], False),
-    ("履约保证金什么情况下不予退还？", ["不履行合同", "不予退还"], False),
+    # 复核更正（2026-11-20）：原文 15.2.1「承包人违约的情形」明确写了
+    #   （3）挂靠、转包…履约保证金不予退还
+    #   （4）承包人不履行合同的，履约保证金不予退还
+    # 所以这题文档里**有**答案，之前判成"编造"是我的尺子坏了（只翻了 7.3 节，没翻 15.2 节）。
+    ("履约保证金什么情况下不予退还？", ["不履行合同", "转包", "挂靠"], False),
+    # 口径确认（2026-11-21，他拍板"算对"）：
+    #   文件里没有"项目经理"这四个字，但有「施工项目负责人需一级建造师」(p.12)。
+    #   业务上项目经理≈施工项目负责人，答出来更有用，所以算对。
+    ("项目经理需要什么证书？", ["一级建造师", "建造师"], False),
 ]
 
 # ---- B 组：文档里没有答案的题（只有答"未提及"才算对）----
 # 为什么单独一组：这类题没有"期望关键词"可言，检索命中率也不该把它算进分母。
 # 它们存在，是为了测"模型会不会硬编" —— 这是 RAG 最容易翻车的地方。
 REFUSAL_CASES = [
-    "项目经理需要什么证书？",
     "投标文件需要提交几份纸质正本和副本？",
     "项目经理的年龄上限是多少？",
     "项目经理需要提供几年的社保缴纳证明？",
@@ -95,8 +103,18 @@ rerank = get_ali_rerank(top_n=5)
 llm = get_lc_model_client(temperature=0.1, max_tokens=1500)
 
 
+# 千分位逗号会让子串匹配失败：答案写 "15,772,346.37"，关键词是 "15772346"
+# 事故：exp_agentic 把「暂列金额」判成错，其实是判分器的问题（第 5 次"尺子坏了"）
+_DROP_COMMA = str.maketrans("", "", ",，")
+
+
+def _no_comma(s):
+    return (s or "").translate(_DROP_COMMA)
+
+
 def hit_any(text, keywords):
-    return any(k in (text or "") for k in keywords)
+    t = _no_comma(text)
+    return any(_no_comma(k) in t for k in keywords)
 
 
 def ctx_of(docs):
@@ -120,73 +138,96 @@ PROMPT = """你是招投标文件助手。只根据下面的【原文片段】�
 """
 
 
-def ask(q, is_template):
+# ---------------- 检索 / 生成 解耦 ----------------
+# 为什么拆开：
+#   1) 检索命中只需要 docs，不需要答案 —— 拆开后可以"零 LLM 成本"评估检索
+#   2) 方案 B（生成后自检循环）必须能单独调 retrieve()
+_qa_chain = None
+
+
+def retrieve(q, is_template):
+    """只做检索，不调生成模型。模板题走手写检索式，其他走生产检索链。"""
     if is_template:
         query = RETRIEVAL_QUERY[q]
-        docs = rerank.compress_documents(ensemble.invoke(query), query)
-        answer = llm.invoke(PROMPT.format(context=ctx_of(docs),
-                                          question=q.replace(" / ", "、"))).content
-    else:
-        client.clear_history()
-        result = client.invoke(q, DOC, max_length=1500, temperature=0.1)
-        docs = result.get("context", [])
-        answer = result.get("answer") or ""
-    return docs, answer
+        return rerank.compress_documents(ensemble.invoke(query), query)
+    return client.get_retrievers(DOC).invoke(q)
 
 
-ret_ok = ans_ok = 0
-rows = []
+def generate(q, docs, is_template):
+    """只做生成：输入已检索好的 docs，返回答案。"""
+    global _qa_chain
+    if is_template:
+        return llm.invoke(
+            PROMPT.format(context=ctx_of(docs), question=q.replace(" / ", "、"))
+        ).content
+    if _qa_chain is None:
+        _qa_chain = create_stuff_documents_chain(llm, qa_prompt)
+    return _qa_chain.invoke({"context": docs, "input": q})
 
-for q, keys, is_template in CASES:
-    docs, answer = ask(q, is_template)
-    r = hit_any(ctx_of(docs), keys)
-    a = hit_any(answer, keys)
-    ret_ok += r
-    ans_ok += a
-    rows.append((q, "✅" if r else "❌", "✅" if a else "❌", answer.replace("\n", " ")[:60]))
+
+def ask(q, is_template):
+    """兼容旧调用：检索 + 生成。"""
+    docs = retrieve(q, is_template)
+    return docs, generate(q, docs, is_template)
 
 
-# 检索没拿到、但回答却命中了 —— 这种题必须单独看
-lucky = [(q, a_) for q, r, a_, _ in rows if r == "❌" and a_ == "✅"]
-print()
-print("=" * 96)
-print("【检索❌ 但 回答✅】回答没靠上下文也对了")
-print("=" * 96)
-for q, _ in lucky:
-    print(f"  · {q}")
-if not lucky:
-    print("  无")
+def main():
+    ret_ok = ans_ok = 0
+    rows = []
 
-refuse_ok = 0
-refuse_rows = []
-for q in REFUSAL_CASES:
-    docs, answer = ask(q, False)
-    ok = hit_any(answer, NO_ANSWER_WORDS)
-    refuse_ok += ok
-    refuse_rows.append((q, "✅" if ok else "❌", answer.replace("\n", " ")[:60]))
+    for q, keys, is_template in CASES:
+        docs, answer = ask(q, is_template)
+        r = hit_any(ctx_of(docs), keys)
+        a = hit_any(answer, keys)
+        ret_ok += r
+        ans_ok += a
+        rows.append((q, "✅" if r else "❌", "✅" if a else "❌", answer.replace("\n", " ")[:60]))
 
-W = 30
-print()
-print("=" * 96)
-print("【A 组】文档里有答案：检索和回答都该命中")
-print("=" * 96)
-print(f"{'问题':<{W}}{'检索':<6}{'回答':<6}片段回答")
-print("-" * 96)
-for q, r, a, preview in rows:
-    print(f"{q:<{W}}{r:<6}{a:<6}{preview}")
 
-print()
-print("=" * 96)
-print("【B 组】文档里没有答案：回答必须是「未提及」，硬编就是错")
-print("=" * 96)
-for q, ok, preview in refuse_rows:
-    print(f"{q:<{W}}{ok:<6}{preview}")
+    # 检索没拿到、但回答却命中了 —— 这种题必须单独看
+    lucky = [(q, a_) for q, r, a_, _ in rows if r == "❌" and a_ == "✅"]
+    print()
+    print("=" * 96)
+    print("【检索❌ 但 回答✅】回答没靠上下文也对了")
+    print("=" * 96)
+    for q, _ in lucky:
+        print(f"  · {q}")
+    if not lucky:
+        print("  无")
 
-n = len(CASES)
-m = len(REFUSAL_CASES)
-print("=" * 96)
-print(f"A 组检索命中率：{ret_ok}/{n} = {ret_ok/n:.0%}   （分母只含有答案的题）")
-print(f"A 组回答命中率：{ans_ok}/{n} = {ans_ok/n:.0%}")
-print(f"B 组拒答正确率：{refuse_ok}/{m} = {refuse_ok/m:.0%}   （该说「未提及」时说了没有）")
-print(f"综合回答正确率：{ans_ok + refuse_ok}/{n + m} = {(ans_ok + refuse_ok)/(n + m):.0%}")
+    refuse_ok = 0
+    refuse_rows = []
+    for q in REFUSAL_CASES:
+        docs, answer = ask(q, False)
+        ok = hit_any(answer, NO_ANSWER_WORDS)
+        refuse_ok += ok
+        refuse_rows.append((q, "✅" if ok else "❌", answer.replace("\n", " ")[:60]))
 
+    W = 30
+    print()
+    print("=" * 96)
+    print("【A 组】文档里有答案：检索和回答都该命中")
+    print("=" * 96)
+    print(f"{'问题':<{W}}{'检索':<6}{'回答':<6}片段回答")
+    print("-" * 96)
+    for q, r, a, preview in rows:
+        print(f"{q:<{W}}{r:<6}{a:<6}{preview}")
+
+    print()
+    print("=" * 96)
+    print("【B 组】文档里没有答案：回答必须是「未提及」，硬编就是错")
+    print("=" * 96)
+    for q, ok, preview in refuse_rows:
+        print(f"{q:<{W}}{ok:<6}{preview}")
+
+    n = len(CASES)
+    m = len(REFUSAL_CASES)
+    print("=" * 96)
+    print(f"A 组检索命中率：{ret_ok}/{n} = {ret_ok/n:.0%}   （分母只含有答案的题）")
+    print(f"A 组回答命中率：{ans_ok}/{n} = {ans_ok/n:.0%}")
+    print(f"B 组拒答正确率：{refuse_ok}/{m} = {refuse_ok/m:.0%}   （该说「未提及」时说了没有）")
+    print(f"综合回答正确率：{ans_ok + refuse_ok}/{n + m} = {(ans_ok + refuse_ok)/(n + m):.0%}")
+
+
+if __name__ == "__main__":
+    main()

@@ -26,7 +26,7 @@ from models import ALI_TONGYI_MAX_MODEL, get_lc_model_client
 # logging.getLogger("langchain.retrievers.re_phraser").setLevel(logging.INFO)
 
 # 知识库问答指令
-qa_system_prompt = """你是公司人事专员。请只依据下面的资料回答问题。
+qa_system_prompt = """你是招投标文件助手。请只依据下面的资料回答问题。
 如果资料里没有，直接说"文档中未提及"，不要编造。
 回答用要点列表，不要写开场白。
 

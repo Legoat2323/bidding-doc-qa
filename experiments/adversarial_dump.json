@@ -1,0 +1,331 @@
+[
+  {
+    "q": "质量保证金的比例是多少？",
+    "arm": "对照",
+    "docs_pages": [],
+    "injected": null,
+    "real_pages": [
+      "174",
+      "133",
+      "133",
+      "133",
+      "173"
+    ],
+    "verify_ran": true,
+    "first_answer": "- 3%的工程款",
+    "unsupported": [],
+    "rounds": 1,
+    "status": "ok",
+    "gold_hit": true,
+    "outcome": "答对",
+    "answer": "- 3%的工程款",
+    "secs": 3.6
+  },
+  {
+    "q": "质量保证金的比例是多少？",
+    "arm": "空上下文",
+    "docs_pages": [],
+    "injected": [],
+    "real_pages": [
+      "174",
+      "133",
+      "133",
+      "133",
+      "173"
+    ],
+    "verify_ran": false,
+    "first_answer": "文档中未提及",
+    "unsupported": [],
+    "rounds": 1,
+    "status": "refused",
+    "gold_hit": false,
+    "outcome": "拒答",
+    "answer": "文档中未提及",
+    "secs": 0.4
+  },
+  {
+    "q": "质量保证金的比例是多少？",
+    "arm": "全错片段",
+    "docs_pages": [],
+    "injected": [
+      "328",
+      "48",
+      "328",
+      "42",
+      "18"
+    ],
+    "real_pages": [
+      "174",
+      "133",
+      "133",
+      "133",
+      "173"
+    ],
+    "verify_ran": false,
+    "first_answer": "文档中未提及",
+    "unsupported": [],
+    "rounds": 1,
+    "status": "refused",
+    "gold_hit": false,
+    "outcome": "拒答",
+    "answer": "文档中未提及",
+    "secs": 0.5
+  },
+  {
+    "q": "质量保证金的比例是多少？",
+    "arm": "混入错片段",
+    "docs_pages": [],
+    "injected": [
+      "174",
+      "133",
+      "41",
+      "133",
+      "133"
+    ],
+    "real_pages": [
+      "174",
+      "133",
+      "133",
+      "133",
+      "173"
+    ],
+    "verify_ran": true,
+    "first_answer": "- 3%的工程款",
+    "unsupported": [],
+    "rounds": 1,
+    "status": "ok",
+    "gold_hit": true,
+    "outcome": "答对",
+    "answer": "- 3%的工程款",
+    "secs": 1.8
+  },
+  {
+    "q": "投标有效期是多久？",
+    "arm": "对照",
+    "docs_pages": [],
+    "injected": null,
+    "real_pages": [
+      "277",
+      "277",
+      "55",
+      "55",
+      "41"
+    ],
+    "verify_ran": true,
+    "first_answer": "- 90天（日历天）",
+    "unsupported": [],
+    "rounds": 1,
+    "status": "ok",
+    "gold_hit": true,
+    "outcome": "答对",
+    "answer": "- 90天（日历天）",
+    "secs": 3.3
+  },
+  {
+    "q": "投标有效期是多久？",
+    "arm": "空上下文",
+    "docs_pages": [],
+    "injected": [],
+    "real_pages": [
+      "277",
+      "277",
+      "55",
+      "55",
+      "41"
+    ],
+    "verify_ran": false,
+    "first_answer": "文档中未提及",
+    "unsupported": [],
+    "rounds": 1,
+    "status": "refused",
+    "gold_hit": false,
+    "outcome": "拒答",
+    "answer": "文档中未提及",
+    "secs": 0.4
+  },
+  {
+    "q": "投标有效期是多久？",
+    "arm": "全错片段",
+    "docs_pages": [],
+    "injected": [
+      "19",
+      "69",
+      "69",
+      "72",
+      "75"
+    ],
+    "real_pages": [
+      "277",
+      "277",
+      "55",
+      "55",
+      "41"
+    ],
+    "verify_ran": false,
+    "first_answer": "文档中未提及",
+    "unsupported": [],
+    "rounds": 1,
+    "status": "refused",
+    "gold_hit": false,
+    "outcome": "拒答",
+    "answer": "文档中未提及",
+    "secs": 0.9
+  },
+  {
+    "q": "投标有效期是多久？",
+    "arm": "混入错片段",
+    "docs_pages": [],
+    "injected": [
+      "277",
+      "277",
+      "228",
+      "55",
+      "55"
+    ],
+    "real_pages": [
+      "277",
+      "277",
+      "55",
+      "55",
+      "41"
+    ],
+    "verify_ran": true,
+    "first_answer": "- 90天（日历天）",
+    "unsupported": [],
+    "rounds": 1,
+    "status": "ok",
+    "gold_hit": true,
+    "outcome": "答对",
+    "answer": "- 90天（日历天）",
+    "secs": 1.9
+  },
+  {
+    "q": "履约保证金什么情况下不予退还？",
+    "arm": "对照",
+    "docs_pages": [],
+    "injected": null,
+    "real_pages": [
+      "174",
+      "153",
+      "153",
+      "98",
+      "45"
+    ],
+    "verify_ran": true,
+    "first_answer": "- 承包人不履行合同\n- 承包人出现挂靠、转包行为\n- 承包人未按要求提交履约担保\n- 存在需扣除的违约款项",
+    "unsupported": [],
+    "rounds": 1,
+    "status": "ok",
+    "gold_hit": true,
+    "outcome": "答对",
+    "answer": "- 承包人不履行合同\n- 承包人出现挂靠、转包行为\n- 承包人未按要求提交履约担保\n- 存在需扣除的违约款项",
+    "secs": 3.8
+  },
+  {
+    "q": "履约保证金什么情况下不予退还？",
+    "arm": "空上下文",
+    "docs_pages": [],
+    "injected": [],
+    "real_pages": [
+      "174",
+      "153",
+      "153",
+      "98",
+      "45"
+    ],
+    "verify_ran": false,
+    "first_answer": "- 文档中未提及",
+    "unsupported": [],
+    "rounds": 1,
+    "status": "refused",
+    "gold_hit": false,
+    "outcome": "拒答",
+    "answer": "- 文档中未提及",
+    "secs": 0.5
+  },
+  {
+    "q": "履约保证金什么情况下不予退还？",
+    "arm": "全错片段",
+    "docs_pages": [],
+    "injected": [
+      "328",
+      "48",
+      "328",
+      "42",
+      "18"
+    ],
+    "real_pages": [
+      "174",
+      "153",
+      "153",
+      "98",
+      "45"
+    ],
+    "verify_ran": false,
+    "first_answer": "文档中未提及",
+    "unsupported": [],
+    "rounds": 1,
+    "status": "refused",
+    "gold_hit": false,
+    "outcome": "拒答",
+    "answer": "文档中未提及",
+    "secs": 0.5
+  },
+  {
+    "q": "履约保证金什么情况下不予退还？",
+    "arm": "混入错片段",
+    "docs_pages": [],
+    "injected": [
+      "174",
+      "153",
+      "41",
+      "153",
+      "98"
+    ],
+    "real_pages": [
+      "174",
+      "153",
+      "153",
+      "98",
+      "45"
+    ],
+    "verify_ran": true,
+    "first_answer": "- 承包人不履行合同\n- 承包人擅自变更工程设计并造成损失或质量问题\n- 工程挂靠、转包\n- 承包人在收到发包人的提交通知后7天内未能提供工程总承包项目经理的劳动合同及社保缴纳证明\n- 由于承包人原因导致工程开工日期延迟、竣工日期延迟、中途停建或缓建、施工组织设计文件中关键线路工期控制时间超过21天，且发包人因此解除或终止合同",
+    "unsupported": [],
+    "rounds": 1,
+    "status": "ok",
+    "gold_hit": true,
+    "outcome": "答对",
+    "answer": "- 承包人不履行合同\n- 承包人擅自变更工程设计并造成损失或质量问题\n- 工程挂靠、转包\n- 承包人在收到发包人的提交通知后7天内未能提供工程总承包项目经理的劳动合同及社保缴纳证明\n- 由于承包人原因导致工程开工日期延迟、竣工日期延迟、中途停建或缓建、施工组织设计文件中关键线路工期控制时间超过21天，且发包人因此解除或终止合同",
+    "secs": 4.6
+  },
+  {
+    "q": "履约保证金什么情况下不予退还？",
+    "arm": "错位主体(#19复刻)",
+    "docs_pages": [
+      "41",
+      "18",
+      "98",
+      "153",
+      "153"
+    ],
+    "injected": [
+      "41",
+      "18",
+      "98",
+      "153",
+      "153"
+    ],
+    "real_pages": [],
+    "verify_ran": false,
+    "first_answer": "- 文档中未提及具体的不予退还履约保证金的情况。仅提供了关于投标担保不予退还的部分信息，但没有直接说明履约保证金在何种情况下不予退还。对于履约保证金的具体条款，文档指出其有效期至工程竣工验收前一直有效，并且在项目竣工验收合格30天后，在没有需扣除违约款项的情况下，经承包人申请可以退还。这意味着如果存在需要扣除的违约款项，则可能影响履约保证金的全额退还，但这并不构成明确的不予退还条件描述。",
+    "unsupported": [],
+    "rounds": 1,
+    "status": "refused",
+    "gold_hit": false,
+    "outcome": "答错",
+    "leak": false,
+    "answer": "- 文档中未提及具体的不予退还履约保证金的情况。仅提供了关于投标担保不予退还的部分信息，但没有直接说明履约保证金在何种情况下不予退还。对于履约保证金的具体条款，文档指出其有效期至工程竣工验收前一直有效，并且在项目竣工验收合格30天后，在没有需扣除违约款项的情况下，经承包人申请可以退还。这意味着如果存在需要扣除的违约款项，则可能影响履约保证金的全额退还，但这并不构成明确的不予退还条件描述。",
+    "secs": 0
+  }
+]
