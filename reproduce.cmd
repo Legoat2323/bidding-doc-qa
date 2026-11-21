@@ -1,8 +1,8 @@
 @echo off
-REM Reproduce the frozen baseline in EVAL.md, end to end.
+REM Reproduce the frozen baseline in README.md ("score table" section), end to end.
 REM
-REM Why: EVAL.md is the official scorecard. This script is the ONLY
-REM accepted way to (re)produce those numbers. When a metric changes,
+REM Why: README's score table is the official scorecard. This script is
+REM the ONLY accepted way to (re)produce those numbers. When a metric changes,
 REM run this first to tell "the code changed" apart from "the world
 REM changed" (model update, API drift, network).
 REM
@@ -45,5 +45,5 @@ echo === 4/4 latency (online) ===
 "%PY%" "%HERE%latency.py" || exit /b 1
 
 echo.
-echo Done. Compare every number against EVAL.md.
+echo Done. Compare every number against README.md (the score table).
 echo Holdout answers land in holdout_report.md and must be judged by hand.
