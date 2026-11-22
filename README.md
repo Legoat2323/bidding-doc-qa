@@ -1,6 +1,8 @@
-# 招投标文件智能问答
+# bidding-doc-qa · 招投标文档智能问答系统
 
 把一份 332 页的工程招标文件，变成能问、能查、能指回页码的工具。
+混合召回（向量 + 中文 2-gram BM25 + RRF + Rerank）+ 分层评估：
+23 题开发集 19/19、holdout 8/8，全部数字可一键复现（`reproduce.cmd`）。
 
 后端 FastAPI + LangChain + Chroma，模型用阿里百炼 qwen-plus，前端原生 HTML/JS。
 
