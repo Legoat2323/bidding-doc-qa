@@ -34,7 +34,7 @@ from custom_loader import MyCustomLoader
 from knowledge import bigram_tokenize
 from models import get_ali_rerank
 from langchain_community.retrievers import BM25Retriever
-from langchain.retrievers import EnsembleRetriever
+from langchain.retrievers import EnsembleRetriever    #这个是混合检索
 
 DOC = "招标文件正文22.pdf"
 DOC_PATH = os.path.join("示例文档", DOC)
@@ -61,7 +61,7 @@ def main() -> None:
 
     targets = {d.page_content for d in documents
                if any(n in d.page_content for n in NEEDLES)}
-    print(f"含答案的切片：{len(targets)} 条")
+    print(f"含答案的切片：{len(targets)} 条")    #这个是按关键词判定
     if not targets:
         print("⚠ 没有切片含答案，先回去查切片")
         return
@@ -74,16 +74,16 @@ def main() -> None:
     print(f"\n向量 k={K}：{len(vec_docs)} 条，答案切片排名 = {rank_of(vec_docs, targets) or '不在候选里'}")
 
     # ---- 2. BM25(2-gram) 召回 k=32 ----
-    bm25 = BM25Retriever.from_documents(documents, k=K, preprocess_func=bigram_tokenize)
+    bm25 = BM25Retriever.from_documents(documents, k=K, preprocess_func=bigram_tokenize)   #preprocess_func=bigram_tokenize中文分词
     bm_docs = bm25.invoke(QUERY)
-    print(f"BM25 k={K}：{len(bm_docs)} 条，答案切片排名 = {rank_of(bm_docs, targets) or '不在候选里'}")
+    print(f"BM25 k={K}：{len(bm_docs)} 条，答案切片排名 = {rank_of(bm_docs, targets) or '不在候选里'}")  #rank_of(bm_docs, targets)答案切片在检索回来的片段里地排名
 
-    # ---- 3. 融合 k=32 ----
+    # ---- 3. 融合 k=64 ----      最大情况是64 有重复的就可以合并
     ens = EnsembleRetriever(retrievers=[vec, bm25], weights=[0.5, 0.5])
     ens_docs = ens.invoke(QUERY)
     print(f"融合 k={K}：{len(ens_docs)} 条，答案切片排名 = {rank_of(ens_docs, targets) or '不在候选里'}")
 
-    # ---- 4. rerank 这 32 条 ----
+    # ---- 4. rerank  融合之后的 ----
     print("\n对 32 条候选做 rerank（这一步要调 API，慢一点）...")
     reranked = get_ali_rerank(top_n=K).compress_documents(ens_docs, QUERY)
     r = rank_of(reranked, targets)
